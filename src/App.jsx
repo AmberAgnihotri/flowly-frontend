@@ -11,6 +11,12 @@ function App() {
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
 
+  const projects = [
+    { id: 1, name: 'Project 1', color: 'green' },
+    { id: 2, name: 'Project 2', color: 'beige' },
+    { id: 3, name: 'Project 3', color: 'lavender' },
+  ]
+
   async function handleSubmit(event) {
     event.preventDefault()
     setMessage('')
@@ -24,7 +30,7 @@ function App() {
 
     try {
       const response = await fetch(
-        `http://localhost:8080/api/auth/${isLogin ? 'login' : 'register'}`,
+        `/api/auth/${isLogin ? 'login' : 'register'}`,
         {
           method: 'POST',
           headers: {
@@ -36,9 +42,10 @@ function App() {
       )
 
       if (isLogin && response.status === 204) {
-        setMessage('Login successful!')
         setPassword('')
         setConfirmPassword('')
+        setMessage('')
+        setPage('dashboard')
       } else if (!isLogin && response.status === 201) {
         setMessage('Account created successfully! You can now log in.')
         setPassword('')
@@ -76,44 +83,67 @@ function App() {
     setMessage('')
   }
 
+  async function handleLogout() {
+    try {
+      const response = await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+      })
+
+      if (response.status === 204) {
+        setPage('home')
+        setIsLogin(false)
+        setUsername('')
+        setPassword('')
+        setConfirmPassword('')
+        setMessage('')
+      } else {
+        setMessage('Logout failed. Please try again.')
+      }
+    } catch {
+      setMessage('Unable to connect to the server.')
+    }
+  }
+
   return (
     <div className="app">
-      <header className="navbar">
-        <button
-          type="button"
-          className="brand-button"
-          onClick={() => navigateTo('home')}
-        >
-          <span className="flowly-logo" aria-hidden="true" />
-          Flowly
-        </button>
-
-        <nav className="nav-actions">
+      {page !== 'dashboard' && (
+        <header className="navbar">
           <button
             type="button"
-            className={page === 'login' ? 'nav-button active' : 'nav-button'}
-            onClick={() => navigateTo('login')}
+            className="brand-button"
+            onClick={() => navigateTo('home')}
           >
-            Log In
+            <span className="flowly-logo" aria-hidden="true" />
+            Flowly
           </button>
 
-          <button
-            type="button"
-            className={
-              page === 'register' ? 'nav-button active' : 'nav-button'
-            }
-            onClick={() => navigateTo('register')}
-          >
-            Register
-          </button>
-        </nav>
-      </header>
+          <nav className="nav-actions">
+            <button
+              type="button"
+              className={page === 'login' ? 'nav-button active' : 'nav-button'}
+              onClick={() => navigateTo('login')}
+            >
+              Log In
+            </button>
+
+            <button
+              type="button"
+              className={
+                page === 'register' ? 'nav-button active' : 'nav-button'
+              }
+              onClick={() => navigateTo('register')}
+            >
+              Register
+            </button>
+          </nav>
+        </header>
+      )}
 
       {page === 'home' && (
         <main className="home-page">
           <section className="welcome-card">
             <h1>Welcome to Flowly</h1>
-
             <p className="home-description">
               A simple place to organize your projects and stay on top of your
               tasks.
@@ -153,10 +183,7 @@ function App() {
 
       {(page === 'login' || page === 'register') && (
         <main className="register-page">
-          <form
-            className="register-card"
-            onSubmit={handleSubmit}
-          >
+          <form className="register-card" onSubmit={handleSubmit}>
             <h1 className="form-title">
               {isLogin ? 'Log In' : 'Register'}
             </h1>
@@ -211,6 +238,61 @@ function App() {
               </p>
             )}
           </form>
+        </main>
+      )}
+
+      {page === 'dashboard' && (
+        <main className="dashboard-page">
+          <header className="dashboard-header">
+            <div className="dashboard-brand">
+              <span className="flowly-logo" aria-hidden="true" />
+              Flowly
+            </div>
+
+            <div className="dashboard-user">
+              <span className="user-avatar">
+                {username.charAt(0).toUpperCase()}
+              </span>
+              <span>{username}</span>
+
+              <button type="button" onClick={handleLogout}>
+                Log out
+              </button>
+            </div>
+          </header>
+
+          <section className="dashboard-content">
+            <div className="dashboard-heading">
+              <div>
+                <p className="dashboard-date">YOUR WORKSPACE</p>
+                <h1>Good morning, {username}</h1>
+                <p className="dashboard-subtitle">
+                  Here is an overview of your projects.
+                </p>
+              </div>
+
+              <button type="button" className="new-project-button">
+                + New project
+              </button>
+            </div>
+
+            <h2 className="projects-heading">Your projects</h2>
+
+            <div className="project-grid">
+              {projects.map((project) => (
+                <article className="project-card" key={project.id}>
+                  <div className={`project-visual ${project.color}`} />
+                  <h3># {project.name}</h3>
+                  <p>Start organizing your tasks.</p>
+
+                  <div className="project-actions">
+                    <button type="button">Edit</button>
+                    <button type="button">Delete</button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
         </main>
       )}
     </div>
