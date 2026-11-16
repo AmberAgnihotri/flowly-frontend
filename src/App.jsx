@@ -1,5 +1,5 @@
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 import './App.css'
 
 const taskStatuses = [
@@ -86,18 +86,6 @@ function App() {
     }
   }, [])
 
-  useEffect(() => {
-    if (page === 'dashboard') {
-      loadProjects()
-    }
-  }, [page, loadProjects])
-
-  useEffect(() => {
-    if (selectedProject) {
-      loadTasks(selectedProject.id)
-    }
-  }, [selectedProject, loadTasks])
-
   async function handleSubmit(event) {
     event.preventDefault()
     setMessage('')
@@ -124,6 +112,7 @@ function App() {
         setPassword('')
         setConfirmPassword('')
         setMessage('')
+        await loadProjects()
         setPage('dashboard')
       } else if (!isLogin && response.status === 201) {
         setMessage('Account created! You can now log in.')
@@ -274,8 +263,8 @@ function App() {
   function openProject(project) {
     setSelectedProject(project)
     setTasks([])
-    setTaskMessage('')
     closeTaskForm()
+    loadTasks(project.id)
   }
 
   function closeProject() {
@@ -416,10 +405,6 @@ function App() {
     } catch {
       setTaskMessage('Could not connect to the server.')
     }
-  }
-
-  function getStatusLabel(status) {
-    return taskStatuses.find((item) => item.value === status)?.label || status
   }
 
   return (
